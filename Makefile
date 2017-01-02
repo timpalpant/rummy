@@ -1,7 +1,6 @@
 SRC_DIR = .
-PROTOS := $(shell find $(SRC_DIR) -name '*.proto')
 
-all: proto
+all: proto server clients
 
 proto:
 	protoc -I/usr/local/include -I${SRC_DIR} \
@@ -12,3 +11,9 @@ proto:
 		-I${GOPATH}/src \
 		--go_out=plugins=grpc:${SRC_DIR} \
 		*.proto
+
+server:
+	go build rummy/gameserver/gamed
+
+clients:
+	go build rummy/clients/cli
