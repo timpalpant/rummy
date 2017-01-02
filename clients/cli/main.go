@@ -33,6 +33,29 @@ func prompt(msg string) string {
 	return strings.TrimRight(result, "\n")
 }
 
+func addCP(client rummy.RummyServiceClient, gameName string) error {
+	n := 0
+	for {
+		if prompt("Add CP? (y/n): ") != "y" {
+			break
+		}
+
+		strategyName := prompt("Enter strategy name: ")
+		playerName := fmt.Sprintf("CP%d-%v", n, strategyName)
+		_, err := client.JoinGame(context.Background(), &rummy.JoinGameRequest{
+			GameName:   gameName,
+			PlayerName: playerName,
+			Strategy:   strategyName,
+		})
+		if err != nil {
+			return err
+		}
+		n++
+	}
+
+	return nil
+}
+
 func createGame(client rummy.RummyServiceClient) (string, int32, error) {
 	gameName := prompt("Enter game name: ")
 	_, err := client.CreateGame(context.Background(), &rummy.CreateGameRequest{
@@ -51,6 +74,10 @@ func createGame(client rummy.RummyServiceClient) (string, int32, error) {
 		return "", 0, err
 	}
 	playerId := resp.PlayerId
+
+	if err := addCP(client, gameName); err != nil {
+		return "", 0, err
+	}
 
 	var start string
 	for start != "y" {
@@ -79,12 +106,10 @@ func createGame(client rummy.RummyServiceClient) (string, int32, error) {
 func joinGame(client rummy.RummyServiceClient) (string, int32, error) {
 	gameName := prompt("Enter game name: ")
 	playerName := prompt("Enter player name: ")
-	strategyName := prompt("Strategy? (leave blank to play interactively): ")
 
 	resp, err := client.JoinGame(context.Background(), &rummy.JoinGameRequest{
 		GameName:   gameName,
 		PlayerName: playerName,
-		Strategy:   strategyName,
 	})
 	if err != nil {
 		return "", 0, err
@@ -161,12 +186,15 @@ func playGame(client rummy.RummyServiceClient, gameName string, playerId int32) 
 			return
 		}
 
-		printGameEvent(resp, playerNames)
-		if resp.Type == rummy.GameEvent_TURN_START && resp.PlayerId == playerId {
-			if err := playTurn(client, gameName, playerId); err != nil {
-				fmt.Println(err)
-				return
+		if resp.PlayerId == playerId {
+			if resp.Type == rummy.GameEvent_TURN_START {
+				if err := playTurn(client, gameName, playerId); err != nil {
+					fmt.Println(err)
+					return
+				}
 			}
+		} else {
+			printGameEvent(resp, playerNames)
 		}
 	}
 
@@ -200,7 +228,15 @@ func printGameEvent(e *rummy.GameEvent, playerNames []string) {
 	fmt.Println(s)
 }
 
-func printCurrentHand(client rummy.RummyServiceClient, gameName string, playerId int32) error {
+func valueSlice(cards []*deck.Card) []deck.Card {
+	result := make([]deck.Card, len(cards))
+	for i, c := range cards {
+		result[i] = *c
+	}
+	return result
+}
+
+func printCurrentStatus(client rummy.RummyServiceClient, gameName string, playerId int32) error {
 	resp, err := client.GetHandCards(context.Background(), &rummy.GetHandCardsRequest{
 		GameName: gameName,
 		PlayerId: playerId,
@@ -209,10 +245,7 @@ func printCurrentHand(client rummy.RummyServiceClient, gameName string, playerId
 		return err
 	}
 	fmt.Printf("Current hand: %v\n", ppCards(resp.Cards, true))
-	return nil
-}
 
-func printCurrentDiscardPile(client rummy.RummyServiceClient, gameName string) error {
 	gs, err := client.GetGameState(context.Background(), &rummy.GetGameStateRequest{
 		GameName: gameName,
 	})
@@ -220,15 +253,24 @@ func printCurrentDiscardPile(client rummy.RummyServiceClient, gameName string) e
 		return err
 	}
 	fmt.Printf("Current discard pile: %v\n", ppCards(gs.DiscardPile, false))
+
+	fmt.Println("All played melds:")
+	for _, m := range gs.AggregatedMelds {
+		fmt.Printf("\t%v\n", ppCards(m.Cards, true))
+	}
+
+	fmt.Println("Current player status:")
+	for _, p := range gs.Players {
+		fmt.Printf("\t%v: %v cards, %v points\n",
+			p.Name, p.NumCardsInHand, p.CurrentScore)
+	}
+
 	return nil
 }
 
 func playTurn(client rummy.RummyServiceClient, gameName string, playerId int32) error {
 	fmt.Println("\nYour turn!")
-	if err := printCurrentHand(client, gameName, playerId); err != nil {
-		return err
-	}
-	if err := printCurrentDiscardPile(client, gameName); err != nil {
+	if err := printCurrentStatus(client, gameName, playerId); err != nil {
 		return err
 	}
 
@@ -241,13 +283,6 @@ func playTurn(client rummy.RummyServiceClient, gameName string, playerId int32) 
 		} else {
 			fmt.Printf("Error discarding: %v\n", err)
 		}
-	}
-
-	if err := printCurrentHand(client, gameName, playerId); err != nil {
-		return err
-	}
-	if err := printCurrentDiscardPile(client, gameName); err != nil {
-		return err
 	}
 
 	return nil
@@ -325,10 +360,24 @@ func playCards(client rummy.RummyServiceClient, gameName string, playerId int32)
 		}
 		sort.Sort(bySuitAndRank(resp.Cards))
 		numbered := make([]string, len(resp.Cards))
+		card2Idx := make(map[deck.Card]int, len(resp.Cards))
 		for i, c := range resp.Cards {
 			numbered[i] = fmt.Sprintf("%d:%v", i, deck.CardString(*c))
+			card2Idx[*c] = i
 		}
 		fmt.Printf("Current hand: %v\n", strings.Join(numbered, " "))
+		possibleMelds := rummy.NewHand(valueSlice(resp.Cards)).Melds()
+		if len(possibleMelds) > 0 {
+			fmt.Println("Possible melds:")
+			for _, m := range possibleMelds {
+				meldStr := make([]string, len(m))
+				for i, card := range m {
+					meldStr[i] = fmt.Sprintf("%d:%v",
+						card2Idx[card], deck.CardString(card))
+				}
+				fmt.Printf("\t%s\n", meldStr)
+			}
+		}
 
 		cardsToPlay := prompt(
 			"Select cards to play as a meld or a rummy (e.g. 1,4,5). " +

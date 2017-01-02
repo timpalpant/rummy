@@ -25,6 +25,7 @@ type Game struct {
 	name2id map[string]int32
 
 	// Current player whose turn it is, and their turn state.
+	turn                   int
 	currentPlayer          int32
 	currentPlayerTurnState GameState_TurnState
 	// If the player picked up cards from the discard pile this turn,
@@ -107,30 +108,40 @@ func (g *Game) Deal() error {
 func (g *Game) GameState() *GameState {
 	playerStates := make([]*PlayerState, len(g.players))
 	for i, p := range g.players {
-		playedCards := make([]*deck.Card, 0)
-		for _, m := range p.melds {
-			for _, c := range m {
-				playedCards = append(playedCards, &c)
-			}
+		score := p.PublicScore()
+		if g.isOver { // Final score is only revealed once game is over.
+			score = p.Score()
 		}
-
 		playerStates[i] = &PlayerState{
 			Id:             int32(i),
 			Name:           p.name,
-			PlayedCards:    playedCards,
+			Melds:          protoMelds(p.melds),
+			Rummies:        protoSlice(p.rummies),
 			NumCardsInHand: int32(len(p.hand)),
-			CurrentScore:   int32(p.Score()),
+			CurrentScore:   int32(score),
 		}
 	}
 
 	return &GameState{
 		NumCardsInStock:   int32(len(g.stock)),
 		DiscardPile:       protoSlice(g.discard),
+		AggregatedMelds:   protoMelds(g.aggregatedMelds()),
 		Players:           playerStates,
+		Turn:              int32(g.turn),
 		CurrentPlayerTurn: g.currentPlayer,
 		TurnState:         g.currentPlayerTurnState,
 		GameOver:          g.isOver,
 	}
+}
+
+func protoMelds(melds []meld.Meld) []*Meld {
+	result := make([]*Meld, len(melds))
+	for i, m := range melds {
+		result[i] = &Meld{
+			Cards: protoSlice(m),
+		}
+	}
+	return result
 }
 
 func (g *Game) PlayerHand(playerId int32) ([]deck.Card, error) {
@@ -148,14 +159,6 @@ func (g *Game) Subscribe(events chan *GameEvent) {
 	g.subscribers = append(g.subscribers, events)
 	if g.isOver {
 		close(events)
-	} else {
-		// Notify whose turn it currently is.
-		// This allows players to recognize it is their turn when
-		// they subscribe, even if it is after Deal has been called.
-		events <- &GameEvent{
-			PlayerId: g.currentPlayer,
-			Type:     GameEvent_TURN_START,
-		}
 	}
 }
 
@@ -396,6 +399,7 @@ func (g *Game) DiscardCard(playerId int32, card deck.Card) error {
 
 // Move Game forward to next player.
 func (g *Game) nextPlayer() {
+	g.turn++
 	g.currentPlayer = (g.currentPlayer + 1) % int32(len(g.players))
 	g.currentPlayerTurnState = GameState_TURN_START
 	g.publish(&GameEvent{

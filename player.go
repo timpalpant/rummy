@@ -24,6 +24,17 @@ type player struct {
 // all played melds and rummies minus the score of cards still
 // in hand.
 func (p player) Score() int {
+	total := p.PublicScore()
+	for card := range p.hand {
+		total -= scoring.Value(card)
+	}
+
+	return total
+}
+
+// PublicScore returns the publicly-visible score formed by
+// taking the total of all played melds and rummies.
+func (p player) PublicScore() int {
 	total := 0
 	for _, m := range p.melds {
 		total += m.Value()
@@ -31,10 +42,5 @@ func (p player) Score() int {
 	for _, card := range p.rummies {
 		total += scoring.Value(card)
 	}
-
-	for card := range p.hand {
-		total -= scoring.Value(card)
-	}
-
 	return total
 }

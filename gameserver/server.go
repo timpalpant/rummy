@@ -93,7 +93,12 @@ func (s *RummyServer) JoinGame(ctx context.Context, req *rummy.JoinGameRequest) 
 			return nil, err
 		}
 
-		go ai.PlayGame(g, id, strat)
+		go func() {
+			if err := ai.PlayGame(g, id, strat); err != nil {
+				glog.Errorf("Error in computer player %v:%v in game %v: %v",
+					id, req.PlayerName, req.GameName, err)
+			}
+		}()
 	}
 
 	return &rummy.JoinGameResponse{

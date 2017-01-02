@@ -73,5 +73,4 @@ func CanRummy(card deck.Card, melds []Meld) bool {
 	}
 
 	return false
-
 }

@@ -3,12 +3,17 @@ package rummy;
 
 import "rummy/deck/deck.proto";
 
+message Meld {
+    repeated deck.Card cards = 1;
+}
+
 message PlayerState {
     int32 id = 1;
     string name = 2;
-    repeated deck.Card played_cards = 3;
-    int32 num_cards_in_hand = 4;
-    int32 current_score = 5;
+    repeated Meld melds = 3;
+    repeated deck.Card rummies = 4;
+    int32 num_cards_in_hand = 5;
+    int32 current_score = 6;
 }
 
 message GameState {
@@ -20,10 +25,12 @@ message GameState {
 
     int32 num_cards_in_stock = 1;
     repeated deck.Card discard_pile = 2;
-    repeated PlayerState players = 3;
-    int32 current_player_turn = 4;
-    TurnState turn_state = 5;
-    bool game_over = 6;
+    repeated Meld aggregated_melds = 3;
+    repeated PlayerState players = 4;
+    int32 turn = 6;
+    int32 current_player_turn = 7;
+    TurnState turn_state = 8;
+    bool game_over = 9;
 }
 
 message GameEvent {

@@ -43,19 +43,18 @@ func main() {
 
 	rand.Seed(*seed)
 
+	glog.Infof("Initializing RPC server on port %v", *port)
 	endpoint := fmt.Sprintf(":%d", *port)
 	lis, err := net.Listen("tcp", endpoint)
 	if err != nil {
 		glog.Fatalf("failed to listen: %v", err)
 	}
-
-	glog.Info("Initializing RPC server")
 	grpcServer := grpc.NewServer()
 	rummyServer := gameserver.NewRummyServer()
 	rummy.RegisterRummyServiceServer(grpcServer, rummyServer)
 	go grpcServer.Serve(lis)
 
-	glog.Info("Starting JSON proxy")
+	glog.Infof("Starting JSON proxy on port %v", *proxyPort)
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
