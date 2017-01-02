@@ -1,0 +1,165 @@
+syntax = "proto3";
+package rummy;
+
+import "rummy/deck/deck.proto";
+import "game.proto";
+
+// Create a new game with the given name.
+// Each game must have a unique name; if the name has been
+// used before, an error will be returned. Games must be
+// created before they can be joined.
+message CreateGameRequest {
+    string game_name = 1;
+}
+
+message CreateGameResponse {
+}
+
+// Join a game (that must already have been created)
+// as the player with the given name. Only one player with
+// each name is allowed in a game. If a player with this
+// name has already joined the game, the previous player id
+// will be returned. If a strategy is provided, then this is a
+// computer player; otherwise it is a human player that must
+// initiate gameplay actions when it is their turn.
+message JoinGameRequest {
+    string game_name = 1;
+    // The name of the player. Must be unique within a game.
+    string player_name = 2;
+    // An optional secret used to identify this player.
+    // If provided, then all game play requests for this player
+    // must include this secret.
+    string player_secret = 3;
+    // Optional, if provided then initialize a computer player
+    // with this strategy.
+    string strategy = 4;
+}
+
+message JoinGameResponse {
+    // The player id within this game. Must be included in all requests.
+    int32 player_id = 1;
+}
+
+// Start the given name, dealing cards to each of the joined players.
+// Once a game has been started, no additional players may join.
+// TODO(palpant): Only let game creator start the game.
+message StartGameRequest {
+    string game_name = 1;
+}
+
+message StartGameResponse {
+}
+
+// Get the publicly-observable game state.
+message GetGameStateRequest {
+    string game_name = 1;
+}
+
+// Get the cards currently in a player's hand.
+message GetHandCardsRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+}
+
+message GetHandCardsResponse {
+    repeated deck.Card cards = 1;
+}
+
+// Subscribe to game events. This allows players to observe the
+// gameplay of other players.
+message SubscribeGameRequest {
+    string game_name = 1;
+}
+
+// Pick up a card from the stock. A player should initiate this request
+// when beginning their turn. Alternatively, a player may issue a
+// PickUpDiscardRequest.
+message PickUpStockRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+}
+
+// Returns the card that was picked up from the stock.
+message PickUpStockResponse {
+    deck.Card card = 1;
+}
+
+// Pick up N cards from the discard pile. A player may initiate this
+// request when beginning their turn. Alternatively, a player may pick
+// up a card from the stock. The N cards picked up are from the top of
+// the discard stack. The bottom-most card must be played this turn.
+message PickUpDiscardRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+    int32 n_cards = 4;
+}
+
+// Returns the cards picked up from the discard pile.
+message PickUpDiscardResponse {
+    repeated deck.Card cards = 1;
+}
+
+// Play cards for points. The cards must either form a new Meld,
+// or rummy off of a meld that has previously been played (by any player).
+// Players may issue this request only when it is their turn and they have
+// picked up cards (either from the stock or the discard pile).
+// This request may be issued multiple times in a single turn.
+message PlayCardsRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+    repeated deck.Card cards = 4;
+    // TODO(palpant): If rummying, we need to specify the meld the player
+    // is choosing to rummy off of. In some cases it may be possible to
+    // rummyoff of either a set or a run.
+}
+
+message PlayCardsResponse {
+    int32 score = 1;
+}
+
+// Discard a card from hand into the discard pile.
+// Players may play this card after picking up cards and (optionally)
+// playing cards for points. Discarding a card ends the player's turn.
+message DiscardCardRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+    deck.Card card = 4;
+}
+
+message DiscardCardResponse {
+}
+
+// Call a rummy observed in the discard pile. This request may be performed
+// at any time when a player observes that a possible rummy has been created
+// either as the result of a discard or newly played cards.
+message CallRummyRequest {
+    string game_name = 1;
+    int32 player_id = 2;
+    string player_secret = 3;
+    repeated deck.Card cards = 4;
+}
+
+message CallRummyResponse {
+}
+
+service RummyService {
+    rpc CreateGame(CreateGameRequest) returns (CreateGameResponse);
+    rpc JoinGame(JoinGameRequest) returns (JoinGameResponse);
+    rpc StartGame(StartGameRequest) returns (StartGameResponse);
+
+    rpc SubscribeGame(SubscribeGameRequest) returns (stream GameEvent);
+    rpc GetGameState(GetGameStateRequest) returns (GameState);
+    rpc GetHandCards(GetHandCardsRequest) returns (GetHandCardsResponse);
+
+    rpc PickUpStock(PickUpStockRequest) returns (PickUpStockResponse);
+    rpc PickUpDiscard(PickUpDiscardRequest) returns (PickUpDiscardResponse);
+    rpc PlayCards(PlayCardsRequest) returns (PlayCardsResponse);
+    rpc DiscardCard(DiscardCardRequest) returns (DiscardCardResponse);
+
+    rpc CallRummy(CallRummyRequest) returns (CallRummyResponse);
+}

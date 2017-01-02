@@ -1,0 +1,44 @@
+syntax = "proto3";
+package rummy;
+
+import "rummy/deck/deck.proto";
+
+message PlayerState {
+    int32 id = 1;
+    string name = 2;
+    repeated deck.Card played_cards = 3;
+    int32 num_cards_in_hand = 4;
+    int32 current_score = 5;
+}
+
+message GameState {
+    enum TurnState {
+        TURN_START = 0;
+        PICKED_UP_CARDS = 1;
+        PLAYED_CARDS = 2;
+    }
+
+    int32 num_cards_in_stock = 1;
+    repeated deck.Card discard_pile = 2;
+    repeated PlayerState players = 3;
+    int32 current_player_turn = 4;
+    TurnState turn_state = 5;
+    bool game_over = 6;
+}
+
+message GameEvent {
+    enum Type {
+        UNKNOWN_TYPE = 0;
+        TURN_START = 1;
+        PICK_UP_STOCK = 2;
+        PICK_UP_DISCARD = 3;
+        PLAY_CARDS = 4;
+        DISCARD = 5;
+        GAME_OVER = 6;
+    }
+
+    int32 player_id = 1;
+    Type type = 2;
+    repeated deck.Card cards = 3;
+    int32 score = 4;
+}
