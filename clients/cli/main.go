@@ -351,7 +351,7 @@ func playCards(client rummy.RummyServiceClient, gameName string, playerId int32)
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			fmt.Printf("Played %v for %v points", ppCards(cards, true), playResp.Score)
+			fmt.Printf("Played %v for %v points\n", ppCards(cards, true), playResp.Score)
 		}
 	}
 }

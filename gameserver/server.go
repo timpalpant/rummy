@@ -23,8 +23,6 @@ const (
 // RummyServer creates new Games of rummy and provides an interface
 // for players to perform actions on the Game.
 type RummyServer struct {
-	connStr string
-
 	// gamesMu protects games and completedGames.
 	gamesMu sync.Mutex
 	// map of game name -> Game.
@@ -33,9 +31,8 @@ type RummyServer struct {
 	completedGames map[string]time.Time
 }
 
-func NewRummyServer(connStr string) *RummyServer {
+func NewRummyServer() *RummyServer {
 	return &RummyServer{
-		connStr:        connStr,
 		games:          make(map[string]*rummy.Game),
 		completedGames: make(map[string]time.Time),
 	}
@@ -96,7 +93,7 @@ func (s *RummyServer) JoinGame(ctx context.Context, req *rummy.JoinGameRequest) 
 			return nil, err
 		}
 
-		go ai.PlayGame(s.connStr, req.GameName, id, strat)
+		go ai.PlayGame(g, id, strat)
 	}
 
 	return &rummy.JoinGameResponse{

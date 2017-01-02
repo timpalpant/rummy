@@ -92,6 +92,13 @@ func (g *Game) Deal() error {
 	g.discard = []deck.Card{g.stock.Pop()}
 	// Choose random player to start.
 	g.currentPlayer = int32(rand.Intn(len(g.players)))
+	// Notify any subscribers who goes first.
+	// Anyone who subscribes after this will receive the event
+	// upon subscription.
+	g.publish(&GameEvent{
+		PlayerId: g.currentPlayer,
+		Type:     GameEvent_TURN_START,
+	})
 	return nil
 }
 
@@ -140,6 +147,14 @@ func (g *Game) Subscribe(events chan *GameEvent) {
 	g.subscribers = append(g.subscribers, events)
 	if g.isOver {
 		close(events)
+	} else {
+		// Notify whose turn it currently is.
+		// This allows players to recognize it is their turn when
+		// they subscribe, even if it is after Deal has been called.
+		events <- &GameEvent{
+			PlayerId: g.currentPlayer,
+			Type:     GameEvent_TURN_START,
+		}
 	}
 }
 
@@ -159,6 +174,13 @@ func (g *Game) PickUpStock(playerId int32) (deck.Card, error) {
 	}
 
 	p := g.players[playerId]
+	// Out of cards in the stock, shuffle the discard pile.
+	if len(g.stock) == 0 {
+		g.stock = deck.Deck(g.discard)
+		g.stock.Shuffle()
+		g.discard = []deck.Card{g.stock.Pop()}
+	}
+
 	card := g.stock.Pop()
 	p.hand[card] = struct{}{}
 	g.publish(&GameEvent{

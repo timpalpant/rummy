@@ -7,7 +7,8 @@ import (
 type StrategyFactory func() Strategy
 
 var allStrategies = map[string]StrategyFactory{
-	"nop": newNopStrategy,
+	"nop":    newNopStrategy,
+	"greedy": newGreedyStrategy,
 }
 
 // Get a new instance of the Strategy with the given name.

@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -37,7 +38,10 @@ func runProxy(ctx context.Context, grpcEndpoint string, port int) error {
 func main() {
 	port := flag.Int("port", 8081, "Port to run gRPC service on")
 	proxyPort := flag.Int("proxyport", 8082, "Port to run JSON proxy on")
+	seed := flag.Int64("seed", 1, "Seed for random shuffling")
 	flag.Parse()
+
+	rand.Seed(*seed)
 
 	endpoint := fmt.Sprintf(":%d", *port)
 	lis, err := net.Listen("tcp", endpoint)
@@ -47,7 +51,7 @@ func main() {
 
 	glog.Info("Initializing RPC server")
 	grpcServer := grpc.NewServer()
-	rummyServer := gameserver.NewRummyServer(endpoint)
+	rummyServer := gameserver.NewRummyServer()
 	rummy.RegisterRummyServiceServer(grpcServer, rummyServer)
 	go grpcServer.Serve(lis)
 
