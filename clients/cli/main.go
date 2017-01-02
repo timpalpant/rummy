@@ -190,7 +190,7 @@ func printGameEvent(e *rummy.GameEvent, playerNames []string) {
 	}
 
 	if len(e.Cards) > 0 {
-		s = s + fmt.Sprintf(": %v", ppCards(e.Cards))
+		s = s + fmt.Sprintf(": %v", ppCards(e.Cards, false))
 	}
 
 	if e.Score != 0 {
@@ -208,7 +208,18 @@ func printCurrentHand(client rummy.RummyServiceClient, gameName string, playerId
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Current hand: %v\n", ppCards(resp.Cards))
+	fmt.Printf("Current hand: %v\n", ppCards(resp.Cards, true))
+	return nil
+}
+
+func printCurrentDiscardPile(client rummy.RummyServiceClient, gameName string) error {
+	gs, err := client.GetGameState(context.Background(), &rummy.GetGameStateRequest{
+		GameName: gameName,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Current discard pile: %v\n", ppCards(gs.DiscardPile, false))
 	return nil
 }
 
@@ -217,14 +228,9 @@ func playTurn(client rummy.RummyServiceClient, gameName string, playerId int32) 
 	if err := printCurrentHand(client, gameName, playerId); err != nil {
 		return err
 	}
-
-	gs, err := client.GetGameState(context.Background(), &rummy.GetGameStateRequest{
-		GameName: gameName,
-	})
-	if err != nil {
+	if err := printCurrentDiscardPile(client, gameName); err != nil {
 		return err
 	}
-	fmt.Printf("Current discard pile: %v\n", ppCards(gs.DiscardPile))
 
 	pickUpCards(client, gameName, playerId)
 
@@ -235,6 +241,13 @@ func playTurn(client rummy.RummyServiceClient, gameName string, playerId int32) 
 		} else {
 			fmt.Printf("Error discarding: %v\n", err)
 		}
+	}
+
+	if err := printCurrentHand(client, gameName, playerId); err != nil {
+		return err
+	}
+	if err := printCurrentDiscardPile(client, gameName); err != nil {
+		return err
 	}
 
 	return nil
@@ -296,7 +309,7 @@ func pickUpDiscard(client rummy.RummyServiceClient, gameName string, playerId in
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Picked up: %v\n", ppCards(resp.Cards))
+	fmt.Printf("Picked up: %v\n", ppCards(resp.Cards, false))
 	return nil
 }
 
@@ -330,13 +343,15 @@ func playCards(client rummy.RummyServiceClient, gameName string, playerId int32)
 			continue
 		}
 
-		_, err = client.PlayCards(context.Background(), &rummy.PlayCardsRequest{
+		playResp, err := client.PlayCards(context.Background(), &rummy.PlayCardsRequest{
 			GameName: gameName,
 			PlayerId: playerId,
 			Cards:    cards,
 		})
 		if err != nil {
 			fmt.Println(err)
+		} else {
+			fmt.Printf("Played %v for %v points", ppCards(cards, true), playResp.Score)
 		}
 	}
 }
@@ -403,8 +418,11 @@ func (b bySuitAndRank) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
 
-func ppCards(cards []*deck.Card) string {
-	sort.Sort(bySuitAndRank(cards))
+func ppCards(cards []*deck.Card, sorted bool) string {
+	if sorted {
+		sort.Sort(bySuitAndRank(cards))
+	}
+
 	result := make([]string, len(cards))
 	for i, c := range cards {
 		result[i] = deck.CardString(*c)

@@ -1,5 +1,9 @@
 package deck
 
+import (
+	"github.com/fatih/color"
+)
+
 var rankToStr = [...]string{
 	"X",
 	"A",
@@ -34,5 +38,9 @@ func RankString(r Card_Rank) string {
 }
 
 func CardString(c Card) string {
-	return RankString(c.Rank) + SuitString(c.Suit)
+	s := RankString(c.Rank) + SuitString(c.Suit)
+	if c.Suit == Card_HEARTS || c.Suit == Card_DIAMONDS {
+		return color.RedString(s)
+	}
+	return s
 }
