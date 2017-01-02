@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 
 	"rummy/deck"
+	"rummy/meld"
 )
 
 const initialNumCards = 7
@@ -139,7 +140,7 @@ func (g *Game) PlayerHand(playerId int32) ([]deck.Card, error) {
 
 	p := g.players[playerId]
 	hs := p.hand.AsSlice()
-	sort.Sort(bySuitAndRank(hs))
+	sort.Sort(deck.BySuitAndRank(hs))
 	return hs, nil
 }
 
@@ -260,7 +261,7 @@ func (g *Game) canPlayCard(card deck.Card, hand Hand, cards []deck.Card) bool {
 
 	// Card is not playable in any melds, check whether it can rummy
 	// against any melds that have previously been played.
-	return g.canRummy(card)
+	return meld.CanRummy(card, g.aggregatedMelds())
 }
 
 func protoSlice(cards []deck.Card) []*deck.Card {
@@ -302,12 +303,13 @@ func (g *Game) PlayCards(playerId int32, cards []deck.Card) (int, error) {
 		seenCards[c] = struct{}{}
 	}
 
-	possibleMeld := Meld(cards)
+	possibleMeld := meld.Meld(cards)
 	isMeld := (possibleMeld.IsSet() || possibleMeld.IsRun())
 
 	canRummy := true
+	aggregatedMelds := g.aggregatedMelds()
 	for _, c := range cards {
-		canRummy = (canRummy && g.canRummy(c))
+		canRummy = (canRummy && meld.CanRummy(c, aggregatedMelds))
 	}
 
 	if !isMeld && !canRummy {
@@ -452,13 +454,14 @@ func (g *Game) CallRummy(playerId int32, cards []deck.Card) error {
 }
 
 func (g *Game) canPlay(cards []deck.Card) bool {
-	possibleMeld := Meld(cards)
+	possibleMeld := meld.Meld(cards)
 	if possibleMeld.IsSet() || possibleMeld.IsRun() {
 		return true
 	}
 
+	aggregatedMelds := g.aggregatedMelds()
 	for _, c := range cards {
-		if !g.canRummy(c) {
+		if !meld.CanRummy(c, aggregatedMelds) {
 			return false
 		}
 	}
@@ -467,32 +470,17 @@ func (g *Game) canPlay(cards []deck.Card) bool {
 	return true
 }
 
-// Check whether the given card can be played as a rummy off of a meld
-// played by any player.
-func (g *Game) canRummy(c deck.Card) bool {
-	for _, m := range g.aggregatedMelds() {
-		if m.IsSet() && m[0].Rank == c.Rank {
-			return true
-		} else if m[0].Suit == c.Suit &&
-			(nextRank[c.Rank] == m[0].Rank || nextRank[m[len(m)-1].Rank] == c.Rank) {
-			return true
-		}
-	}
-
-	return false
-}
-
 // Get all of the extended melds in this Game, formed by taking the
 // melds of each player and extending them with any rummies that have been
 // played off of them.
-func (g *Game) aggregatedMelds() []Meld {
-	melds := make([]Meld, 0)
+func (g *Game) aggregatedMelds() []meld.Meld {
+	melds := make([]meld.Meld, 0)
 	rummies := make(map[deck.Card]struct{}, 0)
 	for _, p := range g.players {
 		for _, m := range p.melds {
 			// Copy melds because we are going to add rummied cards to them
 			// below and don't want to modify the meld attached to the player.
-			copiedMeld := make(Meld, len(m))
+			copiedMeld := make(meld.Meld, len(m))
 			copy(copiedMeld, m)
 			melds = append(melds, copiedMeld)
 		}
@@ -522,12 +510,12 @@ func (g *Game) aggregatedMelds() []Meld {
 	// Assign remaining rummies to the runs they extend.
 	for _, partialRun := range splitPartialRuns(rummies) {
 		for i, m := range melds {
-			if m.IsRun() && m[0].Suit == partialRun[0].Suit {
-				if nextRank[m[len(m)-1].Rank] == partialRun[0].Rank {
+			if m.IsRun() {
+				if deck.Sequential(m[len(m)-1], partialRun[0]) {
 					// Extend run to the right.
 					melds[i] = append(m, partialRun...)
 					break
-				} else if nextRank[partialRun[len(partialRun)-1].Rank] == m[0].Rank {
+				} else if deck.Sequential(partialRun[len(partialRun)-1], m[0]) {
 					// Extend run to the left.
 					melds[i] = append(partialRun, m...)
 					break
@@ -547,14 +535,14 @@ func splitPartialRuns(rummies map[deck.Card]struct{}) [][]deck.Card {
 	}
 
 	runRummies := toSlice(rummies)
-	sort.Sort(bySuitAndRank(runRummies))
+	sort.Sort(deck.BySuitAndRank(runRummies))
 
 	result := make([][]deck.Card, 0)
 	start := 0
 	lastCard := runRummies[start]
 	for i := 1; i < len(runRummies); i++ {
 		card := runRummies[i]
-		if card.Suit != lastCard.Suit || nextRank[lastCard.Rank] != card.Rank {
+		if !deck.Sequential(lastCard, card) {
 			result = append(result, runRummies[start:i])
 			start = i
 		}

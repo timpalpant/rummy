@@ -4,6 +4,30 @@ import (
 	"github.com/fatih/color"
 )
 
+var nextRank = map[Card_Rank]Card_Rank{
+	Card_ACE:   Card_TWO,
+	Card_TWO:   Card_THREE,
+	Card_THREE: Card_FOUR,
+	Card_FOUR:  Card_FIVE,
+	Card_FIVE:  Card_SIX,
+	Card_SIX:   Card_SEVEN,
+	Card_SEVEN: Card_EIGHT,
+	Card_EIGHT: Card_NINE,
+	Card_NINE:  Card_TEN,
+	Card_TEN:   Card_JACK,
+	Card_JACK:  Card_QUEEN,
+	Card_QUEEN: Card_KING,
+	Card_KING:  Card_ACE,
+}
+
+func NextRank(rank Card_Rank) Card_Rank {
+	return nextRank[rank]
+}
+
+func Sequential(card1, card2 Card) bool {
+	return card1.Suit == card2.Suit && NextRank(card1.Rank) == card2.Rank
+}
+
 var rankToStr = [...]string{
 	"X",
 	"A",

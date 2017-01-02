@@ -2,6 +2,8 @@ package rummy
 
 import (
 	"rummy/deck"
+	"rummy/meld"
+	"rummy/scoring"
 )
 
 // player holds the state for a single player in a game of Rummy.
@@ -11,7 +13,7 @@ type player struct {
 	// is over.
 	hand Hand
 	// Played melds (sets or runs).
-	melds []Meld
+	melds []meld.Meld
 	// Played rummies off of other melds.
 	// The melds may be ones we have played, or ones that another
 	// player in the Game has played.
@@ -27,11 +29,11 @@ func (p player) Score() int {
 		total += m.Value()
 	}
 	for _, card := range p.rummies {
-		total += value(card)
+		total += scoring.Value(card)
 	}
 
 	for card := range p.hand {
-		total -= value(card)
+		total -= scoring.Value(card)
 	}
 
 	return total

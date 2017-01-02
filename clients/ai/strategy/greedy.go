@@ -8,6 +8,7 @@ import (
 )
 
 type greedyStrategy struct {
+	currentHand rummy.Hand
 }
 
 func newGreedyStrategy() Strategy {
@@ -26,11 +27,16 @@ func (gs *greedyStrategy) PlayCards(hand rummy.Hand) []deck.Card {
 		}
 	}
 
+	// Play any rummies in our hand.
+
 	return nil
 }
 
 func (gs *greedyStrategy) Discard(hand rummy.Hand) deck.Card {
 	// Discard a random card.
 	i := rand.Intn(len(hand))
-	return hand.AsSlice()[i]
+	toDiscard := hand.AsSlice()[i]
+	delete(hand, toDiscard)
+	gs.currentHand = hand
+	return toDiscard
 }

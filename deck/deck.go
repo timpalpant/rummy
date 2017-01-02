@@ -39,3 +39,36 @@ func (d *Deck) Pop() Card {
 	*d = old[:n-1]
 	return top
 }
+
+// Sort cards by suit and then rank.
+type BySuitAndRank []Card
+
+func (b BySuitAndRank) Len() int {
+	return len(b)
+}
+
+func (b BySuitAndRank) Less(i, j int) bool {
+	if b[i].Suit == b[j].Suit {
+		return b[i].Rank < b[j].Rank
+	}
+	return b[i].Suit < b[j].Suit
+}
+
+func (b BySuitAndRank) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
+
+// Sort cards by rank only.
+type ByRank []Card
+
+func (b ByRank) Len() int {
+	return len(b)
+}
+
+func (b ByRank) Less(i, j int) bool {
+	return b[i].Rank < b[j].Rank
+}
+
+func (b ByRank) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
