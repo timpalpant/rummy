@@ -1,6 +1,7 @@
 syntax = "proto3";
 package rummy;
 
+import "google/api/annotations.proto";
 import "rummy/deck/deck.proto";
 import "game.proto";
 
@@ -148,18 +149,76 @@ message CallRummyResponse {
 }
 
 service RummyService {
-    rpc CreateGame(CreateGameRequest) returns (CreateGameResponse);
-    rpc JoinGame(JoinGameRequest) returns (JoinGameResponse);
-    rpc StartGame(StartGameRequest) returns (StartGameResponse);
+    rpc CreateGame(CreateGameRequest) returns (CreateGameResponse) {
+        option (google.api.http) = {
+            post: "/v1/create/{game_name}"
+        };
+    }
 
-    rpc SubscribeGame(SubscribeGameRequest) returns (stream GameEvent);
-    rpc GetGameState(GetGameStateRequest) returns (GameState);
-    rpc GetHandCards(GetHandCardsRequest) returns (GetHandCardsResponse);
+    rpc JoinGame(JoinGameRequest) returns (JoinGameResponse) {
+        option (google.api.http) = {
+            post: "/v1/join/{game_name}/{player_name}"
+            additional_bindings {
+                post: "/v1/join_game"
+                body: "*"
+            }
+        };
+    }
+    rpc StartGame(StartGameRequest) returns (StartGameResponse) {
+        option (google.api.http) = {
+            post: "/v1/start/{game_name}"
+        };
+    }
 
-    rpc PickUpStock(PickUpStockRequest) returns (PickUpStockResponse);
-    rpc PickUpDiscard(PickUpDiscardRequest) returns (PickUpDiscardResponse);
-    rpc PlayCards(PlayCardsRequest) returns (PlayCardsResponse);
-    rpc DiscardCard(DiscardCardRequest) returns (DiscardCardResponse);
+    rpc SubscribeGame(SubscribeGameRequest) returns (stream GameEvent) {
+		option (google.api.http) = {
+			get: "/v1/subscribe/{game_name}"
+		};
+    }
+    rpc GetGameState(GetGameStateRequest) returns (GameState) {
+		option (google.api.http) = {
+			get: "/v1/state/{game_name}"
+		};
+    }
+    rpc GetHandCards(GetHandCardsRequest) returns (GetHandCardsResponse) {
+		option (google.api.http) = {
+			get: "/v1/hand/{game_name}/{player_id}"
+            additional_bindings {
+                post: "/v1/hand"
+                body: "*"
+            }
+		};
+    }
 
-    rpc CallRummy(CallRummyRequest) returns (CallRummyResponse);
+    rpc PickUpStock(PickUpStockRequest) returns (PickUpStockResponse) {
+		option (google.api.http) = {
+			post: "/v1/pick_up_stock"
+            body: "*"
+		};
+    }
+    rpc PickUpDiscard(PickUpDiscardRequest) returns (PickUpDiscardResponse) {
+		option (google.api.http) = {
+			post: "/v1/pick_up_discard"
+            body: "*"
+		};
+    }
+    rpc PlayCards(PlayCardsRequest) returns (PlayCardsResponse) {
+		option (google.api.http) = {
+			post: "/v1/play_cards"
+            body: "*"
+		};
+    }
+    rpc DiscardCard(DiscardCardRequest) returns (DiscardCardResponse) {
+		option (google.api.http) = {
+			post: "/v1/discard"
+            body: "*"
+		};
+    }
+
+    rpc CallRummy(CallRummyRequest) returns (CallRummyResponse) {
+		option (google.api.http) = {
+			post: "/v1/call_rummy"
+            body: "*"
+		};
+    }
 }
