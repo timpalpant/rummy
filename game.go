@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/proto"
 
 	"rummy/deck"
 	"rummy/meld"
@@ -270,7 +271,7 @@ func (g *Game) canPlayCard(card deck.Card, hand Hand, cards []deck.Card) bool {
 func protoSlice(cards []deck.Card) []*deck.Card {
 	result := make([]*deck.Card, len(cards))
 	for i := range cards {
-		result[i] = &cards[i]
+		result[i] = proto.Clone(&cards[i]).(*deck.Card)
 	}
 	return result
 }
