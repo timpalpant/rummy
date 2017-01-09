@@ -17,8 +17,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"rummy"
-	"rummy/deck"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/deck"
 )
 
 var stdin = bufio.NewReader(os.Stdin)

@@ -9,9 +9,9 @@ import (
 
 	"github.com/golang/glog"
 
-	"rummy"
-	"rummy/clients/ai"
-	"rummy/clients/ai/strategy"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/clients/ai"
+	"github.com/timpalpant/rummy/clients/ai/strategy"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package scoring
 
 import (
-	"rummy/deck"
+	"github.com/timpalpant/rummy/deck"
 )
 
 // TODO(palpant): Allow adjustable scoring rules, e.g. some stipulate that

@@ -1,9 +1,9 @@
 package rummy
 
 import (
-	"rummy/deck"
-	"rummy/meld"
-	"rummy/scoring"
+	"github.com/timpalpant/rummy/deck"
+	"github.com/timpalpant/rummy/meld"
+	"github.com/timpalpant/rummy/scoring"
 )
 
 // player holds the state for a single player in a game of Rummy.

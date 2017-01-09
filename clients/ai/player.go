@@ -1,9 +1,9 @@
 package ai
 
 import (
-	"rummy"
-	"rummy/clients/ai/strategy"
-	"rummy/deck"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/clients/ai/strategy"
+	"github.com/timpalpant/rummy/deck"
 
 	"github.com/golang/glog"
 )

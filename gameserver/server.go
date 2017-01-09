@@ -8,10 +8,10 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 
-	"rummy"
-	"rummy/clients/ai"
-	"rummy/clients/ai/strategy"
-	"rummy/deck"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/clients/ai"
+	"github.com/timpalpant/rummy/clients/ai/strategy"
+	"github.com/timpalpant/rummy/deck"
 )
 
 const (

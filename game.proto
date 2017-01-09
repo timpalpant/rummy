@@ -1,7 +1,7 @@
 syntax = "proto3";
 package rummy;
 
-import "rummy/deck/deck.proto";
+import "github.com/timpalpant/rummy/deck/deck.proto";
 
 message Meld {
     repeated deck.Card cards = 1;

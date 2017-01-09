@@ -40,7 +40,7 @@ package rummy
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import deck "rummy/deck"
+import deck "github.com/timpalpant/rummy/deck"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

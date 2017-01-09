@@ -8,8 +8,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
 
-	"rummy/deck"
-	"rummy/meld"
+	"github.com/timpalpant/rummy/deck"
+	"github.com/timpalpant/rummy/meld"
 )
 
 const initialNumCards = 7

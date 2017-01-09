@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"rummy/deck"
-	"rummy/meld"
+	"github.com/timpalpant/rummy/deck"
+	"github.com/timpalpant/rummy/meld"
 )
 
 type Hand map[deck.Card]struct{}

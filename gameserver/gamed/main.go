@@ -18,8 +18,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"rummy"
-	"rummy/gameserver"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/gameserver"
 )
 
 func runProxy(ctx context.Context, grpcEndpoint string, port int) error {

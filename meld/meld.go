@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"rummy/deck"
-	"rummy/scoring"
+	"github.com/timpalpant/rummy/deck"
+	"github.com/timpalpant/rummy/scoring"
 )
 
 // A Meld is a playable set of 3 or more cards.

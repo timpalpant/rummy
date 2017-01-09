@@ -3,8 +3,8 @@ package strategy
 import (
 	"math/rand"
 
-	"rummy"
-	"rummy/deck"
+	"github.com/timpalpant/rummy"
+	"github.com/timpalpant/rummy/deck"
 )
 
 // Strategy is an interface for implementing Rummy 500 strategies.

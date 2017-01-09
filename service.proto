@@ -2,7 +2,7 @@ syntax = "proto3";
 package rummy;
 
 import "google/api/annotations.proto";
-import "rummy/deck/deck.proto";
+import "github.com/timpalpant/rummy/deck/deck.proto";
 import "game.proto";
 
 // Create a new game with the given name.
