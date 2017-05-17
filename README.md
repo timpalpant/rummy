@@ -59,6 +59,55 @@ CLI
 `clients/cli` provides a command-line client that can be used to connect and play games
 interactively against other human or AI players.
 
+```
+$ ./cli -server :8081
+Welcome to Rummy!
+
+Main menu:
+	1) Create a new game
+	2) Join a game
+	3) Quit
+Please make a selection: 1
+Enter game name: TestGame
+Enter player name: Tim
+Add CP? (y/n): y
+Enter strategy name: greedy
+Add CP? (y/n): n
+Current players in game:
+	0: Tim
+	1: CP0-greedy
+Start game? (y/n): y
+
+Your turn!
+Current hand: [3♥ 5♥ 7♦ 9♦ 7♣ 9♠ J♠]
+Current discard pile: [5♣ 7♠]
+All played melds:
+	[10♥ 10♣ 10♠]
+Current player status:
+	Tim: 7 cards, 0 points
+	CP0-greedy: 4 cards, 30 points
+
+What would you like to do?
+	1) Pick up a card from the stock
+	2) Pick up card(s) from the discard pile
+Selection: 2
+How many cards would you like to pick up?: 3
+Error picking up from discard: rpc error: code = Unknown desc = can't pick up 3 > 2 cards in discard pile
+
+What would you like to do?
+	1) Pick up a card from the stock
+	2) Pick up card(s) from the discard pile
+Selection: 1
+Picked up: A♦
+Current hand: 0:3♥ 1:5♥ 2:A♦ 3:7♦ 4:9♦ 5:7♣ 6:9♠ 7:J♠
+Select cards to play as a meld or a rummy (e.g. 1,4,5). Leave empty to continue:
+Current hand: 0:3♥ 1:5♥ 2:A♦ 3:7♦ 4:9♦ 5:7♣ 6:9♠ 7:J♠
+Select card to discard: 7
+CP0-greedy's turn.
+CP0-greedy picked up a card from the stock.
+CP0-greedy discarded: [6♦]
+```
+
 AI
 --
 
@@ -70,19 +119,18 @@ strategy is implemented in `clients/ai/strategy/greedy.go`.
 Two or more strategies can be played against each other a large number of times using
 the driver in `clients/ai/battle`.
 
-$ ./battle -strategies nop,greedy -num_games 1000 -seed 123
+> ./battle -strategies nop,greedy -num_games 1000 -seed 123
 
 Building
 --------
 
 Regenerate the protos:
-
-$ make proto
+> make proto
 
 Build the server:
 
-$ make server
+> make server
 
 Build the CLI:
 
-$ make clients
+> make clients
